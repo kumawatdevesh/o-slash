@@ -49,4 +49,15 @@
 *         description: Tag with title already exist!
 *       502:
 *         description: Server Error!
+*         schema:
+ *           type: object
+*           properties:
+*             error:
+*               type: string
+*             statusCode:
+*               type: number
+*             path:
+*               type: string
+*             success:
+*               type: boolean
  */

@@ -112,6 +112,17 @@
 *                         type: string   
 *       502:
 *         description: Server Error!.
+*         schema:
+ *           type: object
+*           properties:
+*             error:
+*               type: string
+*             statusCode:
+*               type: number
+*             path:
+*               type: string
+*             success:
+*               type: boolean
  */
 
 // 3
@@ -148,4 +159,15 @@
 *                  type: string
 *       502:
 *         description: Server Error!.
+*         schema:
+ *           type: object
+*           properties:
+*             error:
+*               type: string
+*             statusCode:
+*               type: number
+*             path:
+*               type: string
+*             success:
+*               type: boolean
  */
