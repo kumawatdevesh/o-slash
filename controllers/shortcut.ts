@@ -11,6 +11,7 @@ import { ILogReqObject } from "../interfaces/log";
 // @desc    Create a shortcut
 // @route   /api/v1/shortcut
 const createShortCut = async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
+    let log: ILogReqObject
     try {
 
         const validationErrors = validationResult(req);
@@ -32,6 +33,8 @@ const createShortCut = async (req: Request, res: Response, next: NextFunction): 
             userId: userId
         }   
 
+        log = {id: uuidv4(), eventType: "CREATE", eventDescription: "Shortcut created", userId: req.body.userId, objectName: "shortcuts", objectId: shortcut.id}
+
         const existingShortcut: IShortcutReqObject[] = await knex("shortcuts").where({name, userId: userId})
         
         if(existingShortcut.length > 0) {
@@ -40,13 +43,16 @@ const createShortCut = async (req: Request, res: Response, next: NextFunction): 
         
         await Promise.all([
             await knex("shortcuts").insert(shortcut),
+            await knex("logs").insert(log)
         ])
         if(tags.length > 0) {
             await knex("shortcuts_tags").insert(tags.map(tag => ({id: uuidv4(), tagId: tag, shortcutId: shortcut.id})))
         }
 
-        return res.status(201).json(new SuccessResponse({code: 201, data: [], success: true, message: "Shortcut created successfully!"}))
+        return res.status(201).json(new SuccessResponse({code: 201, data: [{shortcutId: log.id}], success: true, message: "Shortcut created successfully!"}))
     }catch(e) {
+        log = {id: uuidv4(), eventType: "CREATE", userId: req.body.userId, objectName: "shortcuts", objectId: "", eventDescription: "Error ocurred while creating shortcut"}
+        await knex("logs").insert(log)
         return next(new ErrorResponse({error: 'Server Error!', statusCode: 502, path: req.originalUrl, success: false}))
     }
 }

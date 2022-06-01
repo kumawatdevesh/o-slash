@@ -41,9 +41,13 @@ const login = async (req:Request, res:Response, next: NextFunction): Promise<Res
                 }else {
 
                     log = {id: uuidv4(), eventType: "CREATE", eventDescription: "User logged in", userId: existingUser[0].id, objectName: "users", objectId: existingUser[0].id}
-                    await knex("logs").insert(log)
-
                     const token = await sign({data: tokenSignObj(existingUser)}, process.env.JWT_SECRET, {expiresIn: '24h'})
+                    
+                    await Promise.all([
+                        await knex("users").update({userToken: token.toString()}).where({id: existingUser[0].id}).then(),
+                        await knex("logs").insert(log)
+                    ])
+
                     return res.status(200).json(new SuccessResponse({code: 200, data: {token}, success: true, message: "Success"}))
                 }
             })
@@ -104,7 +108,8 @@ const register = async (req:Request, res:Response, next: NextFunction): Promise<
 // @route   /api/v1/logout
 const logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        sign(JSON.stringify({}), process.env.JSW_SECRET, {expiresIn: '1ms'})
+        await knex("users").update({userToken: ""}).where({id: req.body.userId})
+        return res.status(200).json(new SuccessResponse({code: 200, data: [], success: true, message: "User logged out!"}))
     }catch(e) {
         return next(new ErrorResponse({error: 'Server Error!', statusCode:502, path:req.originalUrl, success: false}))
     }

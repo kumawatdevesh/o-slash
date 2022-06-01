@@ -1,5 +1,9 @@
 // Update with your config settings.
+import * as dotenv from 'dotenv';
+import path from 'path';
 import { IKnexConfig } from "../interfaces/database";
+
+dotenv.config({path: path.join(__dirname, '../.env')})
 
 const knexConfigs: IKnexConfig = {
 
@@ -9,10 +13,10 @@ const knexConfigs: IKnexConfig = {
       extension: 'ts'
     },
     connection: {
-      host: "dev.cyt6yq1csgd5.ap-south-1.rds.amazonaws.com",
-      user:  "admin",
-      password: "oslashdevdb",
-      database: "dev",
+      host: process.env.DB_HOST,
+      user:  process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_DATABASE,
       charset: 'utf8mb4'
     },
     debug: true

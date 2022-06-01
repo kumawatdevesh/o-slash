@@ -4,16 +4,20 @@ import {app} from '../app'
 import { ILoginReqObject, IRegisterReqObject } from '../interfaces/auth';
 import { errorResponse } from '../middlewares/error';
 import { ErrorResponse } from '../utils/error';
+import {verifyToken} from '../middlewares/auth';
 jest.useFakeTimers('legacy')
 
 describe('The register and login process', () => {
 
     const REGISTER_ENDPOINT: string='/api/v1/register';
     const LOGIN_ENDPOINT: string='/api/v1/login';
+    const LOGOUT_ENDPOINT: string='/api/v1/logout';
     let userRegObj: IRegisterReqObject;
     let userLoginObj: ILoginReqObject;
     let req;
     let res;
+    let loginResponse;
+    let authReq: any;
 
     beforeAll(async () => {
         await knex('users').del().where({email: "test@gmail.com"})
@@ -26,8 +30,8 @@ describe('The register and login process', () => {
         }
 
         userLoginObj = {
-            email: "test@gmail.com",
-            password: "test"
+            email: "kumawatdevesh99@gmail.com",
+            password: "123456"
         }
 
         req = {
@@ -46,6 +50,14 @@ describe('The register and login process', () => {
                 this.data = payload
             }
         }
+
+        loginResponse = await request(app).post(LOGIN_ENDPOINT).send(userLoginObj);
+
+        authReq = { headers: { authorization: loginResponse.body.data.token }, body: {userId: ""} }
+        const next = jest.fn()
+        verifyToken(authReq, loginResponse, next)
+
+        expect(next).toHaveBeenCalled()
     })
 
     it('it should throw an error if required field is not present', async () => {
@@ -78,7 +90,7 @@ describe('The register and login process', () => {
         })
     })
 
-    it('should return a 422 if user already exists', async () => {
+    it('it should return a 422 if user already exists', async () => {
 
         await request(app).post(REGISTER_ENDPOINT).send(userRegObj)
         .then(response => {
@@ -101,7 +113,7 @@ describe('The register and login process', () => {
         })
     })
 
-    it('should return 404 if user do not exists', async () => {
+    it('it should return 404 if user do not exists', async () => {
 
         await request(app).post(LOGIN_ENDPOINT).send({...userLoginObj, email: "iam@gmail.com"})
         .then(response => {
@@ -112,13 +124,26 @@ describe('The register and login process', () => {
         })
     })
 
-    it('should return 401 if password is incorrect', async () => {
+    it('it should return 401 if password is incorrect', async () => {
 
         await request(app).post(LOGIN_ENDPOINT).send({...userLoginObj, password: "dkjgdjgdj"})
         .then(response => {
             expect(response.status).toBe(401)
             expect(response.body.message).toBe('Password is incorrect!')
             expect(response.body.code).toBe(401)
+            expect(response.body.success).toBe(true)
+        })
+    })
+
+    it('it should log user out', async () => {
+
+        await request(app).post(LOGOUT_ENDPOINT)
+        .set({authorization: loginResponse.body.data.token})
+        .then(response => {
+            expect(response.status).toBe(200)
+            expect(response.body.message).toBe('User logged out!')
+            expect(response.body.code).toBe(200)
+            expect(response.body.data).toStrictEqual([])
             expect(response.body.success).toBe(true)
         })
     })

@@ -12,6 +12,7 @@ describe('Testing Shortcut apis', () => {
     let shortcut: IShortcutReqObject;
     let loginResponse;
     let authReq: any;
+    let shortcutId: string;
     
     beforeAll(async () => {
 
@@ -46,7 +47,10 @@ describe('Testing Shortcut apis', () => {
         expect(response.status).toBe(201)
         expect(response.body.message).toBe('Shortcut created successfully!')
         expect(response.body.code).toBe(201)
-        expect(response.body.data).toStrictEqual([])
+        response.body.data.forEach(res => {
+            expect(typeof res.shortcutId).toBe("string")
+            shortcutId = res.shortcutId;
+        })
         expect(response.body.success).toBe(true)
     })
 
@@ -58,7 +62,7 @@ describe('Testing Shortcut apis', () => {
         expect(response.status).toBe(200)
         expect(response.body.message).toBe('Success!')
         expect(response.body.code).toBe(200)
-        response.body.data.forEach(res => {
+        response.body.data.forEach((res)=> {
             expect(typeof res.id).toBe("string")
             expect(typeof res.name).toBe("string")
             expect(typeof res.link).toBe("string")
@@ -75,24 +79,13 @@ describe('Testing Shortcut apis', () => {
 
     it('it should delete a shortcut', async () => {
 
-        const response = await request(app).get(SHORTCUT_ENDPOINT)
+        const response = await request(app).delete(SHORTCUT_ENDPOINT + `/${shortcutId}`)
         .set({authorization: loginResponse.body.data.token});
 
         expect(response.status).toBe(200)
         expect(response.body.message).toBe('Success!')
         expect(response.body.code).toBe(200)
-        response.body.data.forEach(res => {
-            expect(typeof res.id).toBe("string")
-            expect(typeof res.name).toBe("string")
-            expect(typeof res.link).toBe("string")
-            expect(typeof res.shortlink).toBe("string")
-            expect(typeof res.description).toBe("string")
-            expect(typeof res.isActive).toBe("number")
-            expect(typeof res.accessType).toBe("string")
-            expect(typeof res.createdAt).toBe("string")
-            expect(typeof res.updatedAt).toBe("string")
-            expect(typeof res.userId).toBe("string")
-        })
+        expect(response.body.data).toStrictEqual([])
         expect(response.body.success).toBe(true)
     })
 
