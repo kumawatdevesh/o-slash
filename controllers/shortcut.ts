@@ -59,7 +59,7 @@ const createShortCut = async (req: Request, res: Response, next: NextFunction): 
 
 // @desc    Get shortcuts
 // @route   /api/v1/shortcut
-const getShortcuts = async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
+const getShortcuts = async (req: Request<{}, {}, any, any>, res: Response, next: NextFunction): Promise<Response | void> => {
     
     let log: ILogReqObject
     try {
@@ -67,15 +67,17 @@ const getShortcuts = async (req: Request, res: Response, next: NextFunction): Pr
         let query: string = `SELECT *, (SELECT GROUP_CONCAT(tagId SEPARATOR ',') FROM shortcuts_tags as st WHERE st.shortcutId=s.id) as tags FROM shortcuts as s where userId='${req.body.userId}'`;
         let offset: number = 0;
 
-        const {orderField, orderType, page, limit=20, searchQuery}: ISearch = req.body;
+        const {orderField, orderType, page, limit=20, searchQuery}: ISearch = req.query;
 
         log = {id: uuidv4(), eventType: "READ", eventDescription: "Reading shortcuts", userId: req.body.userId, objectName: "shortcuts", objectId: req.body.userId}
 
-        if(page) {
+        if(page > 0) {
             offset = (page - 1) * limit;
+        }else {
+            offset = 20;
         }
 
-        if(searchQuery) {
+        if(searchQuery && searchQuery.length > 0) {
             query += ` AND shortlink=${searchQuery} OR description=${searchQuery}`;
         }
 

@@ -73,7 +73,31 @@
  *     summary: To get all shortcut for a user
  *     consumes:
  *       - application/json
- *     responses:
+ *     parameters:
+*       - name: orderField
+*         in: query
+*         required: false
+*         type: string
+*         default: "shortcut"
+*       - name: orderType
+*         in: query
+*         required: false
+*         default: "asc"
+*         type: string
+*       - name: page
+*         in: query
+*         required: false
+*         default: 0
+*         type: number
+*       - name: limit
+*         required: false
+*         in: query
+*         type: number
+*       - name: searchQuery
+*         required: false
+*         in: query
+*         type: string
+*     responses:
 *       200:
 *         schema:
  *           type: object
