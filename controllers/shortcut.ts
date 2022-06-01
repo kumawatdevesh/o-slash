@@ -6,6 +6,7 @@ import { SuccessResponse } from "../utils/success";
 import {validationResult} from 'express-validator';
 import { IShortcutReqObject } from "../interfaces/shortcut";
 import { ISearch } from "../interfaces/search";
+import { ILogReqObject } from "../interfaces/log";
 
 // @desc    Create a shortcut
 // @route   /api/v1/shortcut
@@ -54,12 +55,15 @@ const createShortCut = async (req: Request, res: Response, next: NextFunction): 
 // @route   /api/v1/shortcut
 const getShortcuts = async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
     
+    let log: ILogReqObject
     try {
 
         let query: string = `SELECT *, (SELECT GROUP_CONCAT(tagId SEPARATOR ',') FROM shortcuts_tags as st WHERE st.shortcutId=s.id) as tags FROM shortcuts as s where userId='${req.body.userId}'`;
         let offset: number = 0;
 
         const {orderField, orderType, page, limit=20, searchQuery}: ISearch = req.body;
+
+        log = {id: uuidv4(), eventType: "READ", eventDescription: "Reading shortcuts", userId: req.body.userId, objectName: "shortcuts", objectId: req.body.userId}
 
         if(page) {
             offset = (page - 1) * limit;
@@ -74,9 +78,12 @@ const getShortcuts = async (req: Request, res: Response, next: NextFunction): Pr
         }
 
         const shortcuts = await knex.raw(query)
+        await knex("logs").insert(log)
         
         return res.status(200).json(new SuccessResponse({code: 200, data: shortcuts[0], success: true, message: "Success!"}))
     }catch(e) {
+        log = {id: uuidv4(), eventType: "READ", eventDescription: "Error ocurred while getting shortcuts", userId: req.body.userId, objectName: "shortcuts", objectId: ""}
+        await knex("logs").insert(log)
         return next(new ErrorResponse({error: 'Server Error!', statusCode: 502, path: req.originalUrl, success: false}))
     }
 }
@@ -84,14 +91,20 @@ const getShortcuts = async (req: Request, res: Response, next: NextFunction): Pr
 // @desc    Delete shortcut
 // @route   /api/v1/shortcut/:id
 const deleteShortcut = async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
+    let log: ILogReqObject;
     try {
         const shortcutId: string = req.params.id
 
+        log = {id: uuidv4(), eventType: "DELETE", eventDescription: "Deleting shortcut!", userId: req.body.userId, objectName: "shortcuts", objectId: shortcutId}
+
         await Promise.all([
             await knex("shortcuts").del().where({id: shortcutId, userId: req.body.userId}),
+            await knex("logs").insert(log)
         ])
         return res.status(200).json(new SuccessResponse({code: 200, data: [], success: true, message: "Success!"}))
     }catch(e) {
+        log = {id: uuidv4(), eventType: "READ", eventDescription: "Error occured while deleting shortcut", userId: req.body.userId, objectName: "shortcuts", objectId: req.params.id}
+        await knex("logs").insert(log)
         return next(new ErrorResponse({error: 'Server Error!', statusCode: 502, path: req.originalUrl, success: false}))
     }
 }
