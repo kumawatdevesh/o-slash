@@ -3,6 +3,7 @@ import {agent as request} from 'supertest'
 import {app} from '../app'
 import { IShortcutReqObject } from '../interfaces/shortcut';
 import { verifyToken } from '../middlewares/auth';
+import { ILoginReqObject } from '../interfaces/auth';
 jest.useFakeTimers('legacy')
 
 describe('Testing Shortcut apis', () => {
@@ -16,7 +17,7 @@ describe('Testing Shortcut apis', () => {
     
     beforeAll(async () => {
 
-        const userLoginObj = {
+        const userLoginObj: ILoginReqObject = {
             email: "kumawatdevesh99@gmail.com",
             password: "123456"
         }
